@@ -30,3 +30,7 @@
 
 CMakeCache.txt
 CMakeFiles/
+
+spider*
+.idea
+CMakeLists.txt

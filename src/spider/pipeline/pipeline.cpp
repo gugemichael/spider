@@ -7,12 +7,15 @@
 namespace spider {
 namespace pipeline {
 
-void Pipeline::addModule(Module *module) {
+void Pipeline::registerModule(std::shared_ptr<Module> module) {
 
 }
 
 }
 }
+
+
+
 
 
 

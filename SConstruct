@@ -1,8 +1,6 @@
-env = Environment(CC = 'gcc',CCFLAGS = '-O2 -std=c++11')
+env = Environment(CC = 'g++', CPPFLAGS = ('-std=c++11 -g'))
 
 LIBS = 'm',
 LIBPATH = ['/usr/lib', '/usr/local/lib'],
-CCFLAGS = ('-DHELLOSCONS')
-CPPFLAGS = ('-std=c++11 -DHELLOSCONS')
 
-env.Program('spider', ['src/spider/spider.cpp'])
+env.Program('spider', ['src/spider.cpp'], CPPPATH = ['src'], LIBS=['glog'])

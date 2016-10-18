@@ -2,13 +2,12 @@
 // Created by Michael on 10/9/16.
 //
 
-#ifndef SPIDER_PIPELINE_H
-#define SPIDER_PIPELINE_H
+#pragma once
 
 #include <list>
+#include "engine/engine.h"
 
 namespace spider {
-
 namespace pipeline {
 
 class Module {
@@ -18,15 +17,16 @@ class Module {
 class Pipeline {
 
 public :
-    void addModule(Module *module);
+    void registerModule(std::shared_ptr<Module> module);
 
 private :
-    std::list<Module *> _modules;
+
+    // managed modules
+    std::list<std::shared_ptr<Module>> _modules;
+    // global engine. not owned
+    spider::engine::GlobalEngine *_engine;
 };
 
 }   // end of namespace spider
-
 }   // end of namespace pipeline
 
-
-#endif //SPIDER_PIPELINE_H
