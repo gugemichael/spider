@@ -1,6 +1,14 @@
-env = Environment(CC = 'g++', CPPFLAGS = ('-std=c++11 -g'))
+env = Environment(CC = 'g++', CPPFLAGS = ('-std=c++14 -g'))
 
 LIBS = 'm',
 LIBPATH = ['/usr/lib', '/usr/local/lib'],
 
-env.Program('spider', ['src/spider.cpp'], CPPPATH = ['src'], LIBS=['glog'])
+env.Append(CCFLAGS = '-g')
+
+spider = env.Program('./bin/spider', [
+		'src/spider.cpp',
+		Glob('src/scheduler/*.cpp'),
+		Glob('src/common/*.cpp'),
+], CPPPATH = ['src'], LIBS=['glog'])
+
+

@@ -1,83 +1,87 @@
+#include <iostream>
+#include <vector>
 
+#include <glog/logging.h>
+
+#include "common/disallow_coping.h"
+#include "common/url_request.h"
 #include "scheduler/scheduler.h"
 #include "spider/pipeline/pipeline.h"
 
-#include <iostream>
-#include <list>
-
-#include "glog/logging.h"
+const std::string LOGS_DIR = "./logs/";
 
 namespace spider {
 
-using Scheduler = scheduler::Scheduler;
-using Pipeline = pipeline::Pipeline;
+using namespace scheduler;
 
-class Spider {
+class Crawler {
+    DISALLOW_COPYING(Crawler);
 
 public :
-    static std::string name() { return "spieder"; }
+    Crawler(Scheduler* scheduler);
+    ~Crawler() {};
 
-    Spider(std::shared_ptr<Scheduler> scheduler);
-    Spider(Spider &spider) = delete;
-    Spider(const Spider &spider) = delete;
-    Spider(Spider &&spider) = delete;
+    bool startup();
 
-    bool startupCrawl();
-
-    // gived seed urls
-    void seedUrl(const std::list<std::string> &seeds);
+    // initialized seed urls. we will start crawling web page
+    // from these points. And they are important to be specified.
+    void useSeedUrls(std::vector<std::string>& seeds);
 
 private :
+    std::unique_ptr<Scheduler> _scheduler;
 
-    std::shared_ptr<Pipeline> _pipeline;
-    std::shared_ptr<Scheduler> _scheduler;
-
-    // seeds
-    std::list<std::string> _seedUrls;
+    // entire url seed list
+    std::vector<std::string> _seedUrls;
 };
 
-Spider::Spider(std::shared_ptr<Scheduler> scheduler) :
-        _pipeline(std::make_shared<Pipeline>()),
-        _scheduler(std::move(scheduler)) {
+Crawler::Crawler(Scheduler* scheduler) :
+        _scheduler(scheduler) {
     LOG_ASSERT(_scheduler != nullptr);
-    LOG_ASSERT(_pipeline != nullptr);
 
-    LOG(ERROR) << "aaaaaaaa";
-    LOG(INFO) << this->name() << " initailized successful !";
-    LOG(WARNING) << this->name() << " initailized successful !";
+    LOG(INFO) << "Gloal crawler initailize successfully !";
 }
 
-bool Spider::startupCrawl() {
+bool Crawler::startup() {
+    std::vector<std::unique_ptr<url::DownloadRequest>> initSeeds;
+    for (auto& url : this->_seedUrls) {
+        initSeeds.push_back(std::make_unique<url::DownloadRequest>(url));
+    }
 
+    _scheduler->addMoreUrls(initSeeds);
+    _scheduler->run();
     return true;
 }
 
-void Spider::seedUrl(const std::list<std::string> &seeds) {
+void Crawler::useSeedUrls(std::vector<std::string>& seeds) {
     this->_seedUrls = std::move(seeds);
 }
-
 
 }   // end of namespace spider
 
 
-int main(int argc, char **argv) {
+using namespace spider;
+
+void readUrlSeeds(std::vector<std::string>&);
+
+int main(int argc, char** argv) {
     // initialize glog
-    const char *appName = static_cast<const char *>(argv[0]);
+    FLAGS_log_dir = LOGS_DIR;
+    const char* appName = static_cast<const char*>(argv[0]);
     google::InitGoogleLogging(appName);
-    google::SetLogDestination(google::INFO, "spider.log.");
 
-//    using namespace spider;
-//
-//
-//    Spider *spider = new Spider(std::make_shared<scheduler::FIFOScheduler>());
-//    spider->startupCrawl();
-//
-//    delete spider;
+    std::unique_ptr<spider::Crawler> spider = std::make_unique<spider::Crawler>(new FIFOScheduler());
 
-    VLOG(100) << "VLOG INFO 100";
+    std::vector<std::string> urlSeeds;
+    readUrlSeeds(urlSeeds);
+    spider->useSeedUrls(urlSeeds);
+    spider->startup();
 
-    LOG(ERROR) << "spider shutdown !!! \n";
+    LOG(INFO) << "spider shutdown !!! \n";
     google::ShutdownGoogleLogging();
 
     return 0;
+}
+
+void readUrlSeeds(std::vector<std::string>& seeds) {
+    seeds.push_back("http://www.baidu.com");
 }

@@ -7,7 +7,7 @@
 namespace spider {
 namespace pipeline {
 
-void Pipeline::registerModule(std::shared_ptr<Module> module) {
+void ProcessorManager::registerModule(std::shared_ptr<Module> module) {
 
 }
 

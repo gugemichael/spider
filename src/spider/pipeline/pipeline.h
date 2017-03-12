@@ -14,7 +14,7 @@ class Module {
 
 };
 
-class Pipeline {
+class ProcessorManager {
 
 public :
     void registerModule(std::shared_ptr<Module> module);
