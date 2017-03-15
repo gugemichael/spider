@@ -17,6 +17,9 @@ public:
     }
     ~DownloadRequest() = default;
 
+    const std::string& uri() { return _uri; }
+    HttpMethod& httpMethod() { return _httpMethod; }
+
 private:
     std::string _uri;
     HttpMethod _httpMethod;

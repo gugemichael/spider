@@ -34,3 +34,6 @@ CMakeFiles/
 spider*
 .idea
 CMakeLists.txt
+.sconsign*
+cmake*
+Makefile

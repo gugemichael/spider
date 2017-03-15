@@ -1,16 +1,15 @@
 //
-// Created by Michael on 10/17/16.
+// Created by Michael on 15/03/2017.
 //
 
-#pragma once
+#ifndef SPIDER_ENGINE_H
+#define SPIDER_ENGINE_H
 
-namespace spider {
 namespace engine {
 
 class GlobalEngine {
 
 };
 
-
 }
-}
+#endif //SPIDER_ENGINE_H

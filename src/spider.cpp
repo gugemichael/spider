@@ -6,7 +6,7 @@
 #include "common/disallow_coping.h"
 #include "common/url_request.h"
 #include "scheduler/scheduler.h"
-#include "spider/pipeline/pipeline.h"
+#include "spider/middleware/processor.h"
 
 const std::string LOGS_DIR = "./logs/";
 
@@ -38,17 +38,20 @@ Crawler::Crawler(Scheduler* scheduler) :
         _scheduler(scheduler) {
     LOG_ASSERT(_scheduler != nullptr);
 
-    LOG(INFO) << "Gloal crawler initailize successfully !";
+    LOG(INFO) << "Gloal crawler initailize successful";
 }
 
 bool Crawler::startup() {
+    // initialize seed urls that the point site we would start to crawl
     std::vector<std::unique_ptr<url::DownloadRequest>> initSeeds;
     for (auto& url : this->_seedUrls) {
         initSeeds.push_back(std::make_unique<url::DownloadRequest>(url));
     }
 
+    _scheduler->setDownloader(std::make_shared<fetcher::ThreadPoolFetcher>(std::thread::hardware_concurrency() * 2));
     _scheduler->addMoreUrls(initSeeds);
-    _scheduler->run();
+    _scheduler->runAndJoin();
+    _scheduler->stop();
     return true;
 }
 
@@ -62,6 +65,7 @@ void Crawler::useSeedUrls(std::vector<std::string>& seeds) {
 using namespace spider;
 
 void readUrlSeeds(std::vector<std::string>&);
+void startCrawler();
 
 int main(int argc, char** argv) {
     // initialize glog
@@ -69,19 +73,21 @@ int main(int argc, char** argv) {
     const char* appName = static_cast<const char*>(argv[0]);
     google::InitGoogleLogging(appName);
 
-    std::unique_ptr<spider::Crawler> spider = std::make_unique<spider::Crawler>(new FIFOScheduler());
-
-    std::vector<std::string> urlSeeds;
-    readUrlSeeds(urlSeeds);
-    spider->useSeedUrls(urlSeeds);
-    spider->startup();
+    startCrawler();
 
     LOG(INFO) << "spider shutdown !!! \n";
     google::ShutdownGoogleLogging();
-
     return 0;
 }
 
 void readUrlSeeds(std::vector<std::string>& seeds) {
     seeds.push_back("http://www.baidu.com");
+}
+
+void startCrawler() {
+    std::unique_ptr<spider::Crawler> spider = std::make_unique<spider::Crawler>(new FIFOScheduler());
+    std::vector<std::string> urlSeeds;
+    readUrlSeeds(urlSeeds);
+    spider->useSeedUrls(urlSeeds);
+    spider->startup();
 }
