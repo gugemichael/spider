@@ -7,15 +7,16 @@
 #include <thread>
 #include <vector>
 
-#include <boost/lockfree/queue.hpp>
-#include <folly/MPMCQueue.h>
 #include <spider/fetcher/download.h>
 
 #include "common/url_request.h"
+#include "common/block_queue.h"
 #include "common/disallow_coping.h"
 
 namespace spider {
 namespace scheduler {
+
+using namespace engine;
 
 class Scheduler {
     DISALLOW_COPYING(Scheduler);
@@ -61,7 +62,7 @@ private:
     // downloader will fetch request able object from this queue
 
     // boost::lockfree::queue<url::DownloadRequest*> _requestQueue;
-    folly::MPMCQueue<url::DownloadRequest*> _requestQueue;
+    LazyPendingQueue<url::DownloadRequest*> _requestQueue;
 
 
     // schedule thread

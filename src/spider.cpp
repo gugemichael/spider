@@ -5,6 +5,7 @@
 
 #include "common/disallow_coping.h"
 #include "common/url_request.h"
+#include "common/stdx/memory.h"
 #include "scheduler/scheduler.h"
 #include "spider/middleware/processor.h"
 
@@ -18,14 +19,14 @@ class Crawler {
     DISALLOW_COPYING(Crawler);
 
 public :
-    Crawler(Scheduler* scheduler);
+    Crawler(Scheduler *scheduler);
     ~Crawler() {};
 
     bool startup();
 
     // initialized seed urls. we will start crawling web page
     // from these points. And they are important to be specified.
-    void useSeedUrls(std::vector<std::string>& seeds);
+    void useSeedUrls(std::vector<std::string> &seeds);
 
 private :
     std::unique_ptr<Scheduler> _scheduler;
@@ -34,7 +35,7 @@ private :
     std::vector<std::string> _seedUrls;
 };
 
-Crawler::Crawler(Scheduler* scheduler) :
+Crawler::Crawler(Scheduler *scheduler) :
         _scheduler(scheduler) {
     LOG_ASSERT(_scheduler != nullptr);
 
@@ -44,8 +45,8 @@ Crawler::Crawler(Scheduler* scheduler) :
 bool Crawler::startup() {
     // initialize seed urls that the point site we would start to crawl
     std::vector<std::unique_ptr<url::DownloadRequest>> initSeeds;
-    for (auto& url : this->_seedUrls) {
-        initSeeds.push_back(std::make_unique<url::DownloadRequest>(url));
+    for (auto &url : this->_seedUrls) {
+        initSeeds.push_back(stdx::make_unique<url::DownloadRequest>(url));
     }
 
     _scheduler->setDownloader(std::make_shared<fetcher::ThreadPoolFetcher>(std::thread::hardware_concurrency() * 2));
@@ -55,7 +56,7 @@ bool Crawler::startup() {
     return true;
 }
 
-void Crawler::useSeedUrls(std::vector<std::string>& seeds) {
+void Crawler::useSeedUrls(std::vector<std::string> &seeds) {
     this->_seedUrls = std::move(seeds);
 }
 
@@ -64,13 +65,13 @@ void Crawler::useSeedUrls(std::vector<std::string>& seeds) {
 
 using namespace spider;
 
-void readUrlSeeds(std::vector<std::string>&);
+void readUrlSeeds(std::vector<std::string> &);
 void startCrawler();
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     // initialize glog
     FLAGS_log_dir = LOGS_DIR;
-    const char* appName = static_cast<const char*>(argv[0]);
+    const char *appName = static_cast<const char *>(argv[0]);
     google::InitGoogleLogging(appName);
 
     startCrawler();
@@ -80,12 +81,12 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-void readUrlSeeds(std::vector<std::string>& seeds) {
+void readUrlSeeds(std::vector<std::string> &seeds) {
     seeds.push_back("http://www.baidu.com");
 }
 
 void startCrawler() {
-    std::unique_ptr<spider::Crawler> spider = std::make_unique<spider::Crawler>(new FIFOScheduler());
+    std::unique_ptr<spider::Crawler> spider = stdx::make_unique<spider::Crawler>(new FIFOScheduler());
     std::vector<std::string> urlSeeds;
     readUrlSeeds(urlSeeds);
     spider->useSeedUrls(urlSeeds);
