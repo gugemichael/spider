@@ -4,26 +4,24 @@
 
 #pragma once
 
-#include <list>
+#include "common/disallow_coping.h"
+#include "common/web/web_object.h"
 
-namespace spider {
-namespace pipeline {
+namespace middleware {
 
-class Module {
+class Processor {
+    DISALLOW_COPYING(Processor);
 
-};
-
-class ProcessorManager {
+public:
+    Processor() = default;
+    virtual ~Processor() = default;
 
 public :
-    void registerModule(std::shared_ptr<Module> module);
+    virtual bool setup() = 0;
 
-private :
+    virtual void handle(std::shared_ptr<WebObject> webObject) = 0;
 
-    // managed modules
-    std::list<std::shared_ptr<Module>> _modules;
 };
 
-}   // end of namespace spider
-}   // end of namespace pipeline
+}   // end of namespace middleware
 

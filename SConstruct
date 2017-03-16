@@ -8,6 +8,7 @@ env.Append(CCFLAGS = '-g')
 
 spider = env.Program('./bin/spider', [
 		'src/spider.cpp',
+		Glob('src/engine//*.cpp'),
 		Glob('src/scheduler/*.cpp'),
 		Glob('src/common/*.cpp'),
 		Glob('src/spider/fetcher/*.cpp'),

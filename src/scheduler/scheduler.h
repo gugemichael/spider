@@ -7,16 +7,14 @@
 #include <thread>
 #include <vector>
 
-#include <spider/fetcher/download.h>
+#include "spider/fetcher/download.h"
 
-#include "common/url_request.h"
+#include "common/web/url_request.h"
 #include "common/block_queue.h"
 #include "common/disallow_coping.h"
 
 namespace spider {
 namespace scheduler {
-
-using namespace engine;
 
 class Scheduler {
     DISALLOW_COPYING(Scheduler);
@@ -31,14 +29,14 @@ public:
     virtual void runAndJoin() = 0;
     virtual void stop() = 0;
 
-    virtual void setDownloader(std::shared_ptr<fetcher::Downloader> downloader) {
-        this->_downloader = std::move(downloader);
+    virtual void setDownloader(fetcher::Downloader* downloader) {
+        this->_downloader = downloader;
     }
 
 protected:
 
     // web http downloader
-    std::shared_ptr<fetcher::Downloader> _downloader;
+    fetcher::Downloader* _downloader;   // not owned
 };
 
 class FIFOScheduler : public Scheduler {

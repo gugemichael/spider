@@ -2,6 +2,7 @@
 // Created by Michael on 15/03/2017.
 //
 
+#include <functional>
 #include <glog/logging.h>
 
 #include "common/basic.h"
@@ -10,6 +11,7 @@
 
 HttpHeader emptyHeader;
 
+namespace spider {
 namespace fetcher {
 
 std::once_flag SimpleCUrl::_globalSetup;
@@ -26,21 +28,22 @@ bool SimpleCUrl::initialize() {
     return (this->_conn = curl_easy_init()) != nullptr;
 }
 
-size_t request_handler(void* buffer, size_t size, size_t nmemb, void* user_p) {
-    std::string* destination = (std::string*) user_p;
-    destination->assign((const char*) buffer, size * nmemb);
+size_t request_handler(void *buffer, size_t size, size_t nmemb, void *user_p) {
+    std::string *destination = (std::string *) user_p;
+    destination->assign((const char *) buffer, size * nmemb);
     return size * nmemb;
 }
 
-CURLcode __curl_common_opt(CURL* conn, const std::string uri, uint32_t timeout, std::string& body) {
+CURLcode __curl_common_opt(CURL *conn, const std::string uri, uint32_t timeout, std::string &body) {
     CURLcode error;
 
-    if ((error = curl_easy_setopt(conn, CURLOPT_URL, "http://www.baidu.com")) != 0) {
+    if ((error = curl_easy_setopt(conn, CURLOPT_URL, uri.c_str())) != 0) {
         LOG(ERROR) << "simple_curl CURLOPT_URL return error : " << error;
         return error;
     }
 
-    if ((error = curl_easy_setopt(conn, CURLOPT_FOLLOWLOCATION, true)) != 0) {
+    if ((error = curl_easy_setopt(conn, CURLOPT_FOLLOWLOCATION, 1)) != 0) {
+        curl_easy_setopt(conn, CURLOPT_MAXREDIRS, 8);
         LOG(ERROR) << "simple_curl CURLOPT_FOLLOWLOCATION return error : " << error;
         return error;
     }
@@ -58,35 +61,37 @@ CURLcode __curl_common_opt(CURL* conn, const std::string uri, uint32_t timeout, 
     return CURLE_OK;
 }
 
-bool __curl_perform_and_clean(CURL* conn) {
-    CURLcode code = curl_easy_perform(conn);
+bool __curl_perform_and_clean(CURL *conn) {
+    CURLcode error = curl_easy_perform(conn);
     curl_easy_cleanup(conn);
 
-    return code == CURLE_OK;
+    if (error != CURLE_OK)
+        LOG(WARNING) << "curl request perform failed : " << curl_easy_strerror(error);
+
+    return CURLE_OK;
 }
 
-bool SimpleCUrl::doGet(const std::string& uri, std::string& body) {
+bool SimpleCUrl::doGet(const std::string &uri, std::string &body) {
     return this->doGet(uri, emptyHeader, body);
 }
 
 
-bool SimpleCUrl::doGet(const std::string& uri, HttpHeader& header, std::string& body) {
+bool SimpleCUrl::doGet(const std::string &uri, HttpHeader &header, std::string &body) {
     invariant(_conn != nullptr);
 
-    if (__curl_common_opt(_conn, uri, _timeout, body) != CURLE_OK)
+    if (__curl_common_opt(_conn, uri, _timeout, body) != CURLE_OK) {
+        curl_easy_cleanup(_conn);
         return false;
+    }
 
-    if (!__curl_perform_and_clean(_conn))
-        return false;
-
-    return true;
+    return __curl_perform_and_clean(_conn) && (_conn = curl_easy_init());
 }
 
-bool SimpleCUrl::doPost(const std::string& uri, const std::string& data, std::string& body) {
+bool SimpleCUrl::doPost(const std::string &uri, const std::string &data, std::string &body) {
     return this->doPost(uri, emptyHeader, data, body);
 }
 
-bool SimpleCUrl::doPost(const std::string& uri, HttpHeader& header, const std::string& data, std::string& body) {
+bool SimpleCUrl::doPost(const std::string &uri, HttpHeader &header, const std::string &data, std::string &body) {
     invariant(_conn != nullptr);
 
     char buffer[_maxResponseSize];
@@ -97,12 +102,8 @@ bool SimpleCUrl::doPost(const std::string& uri, HttpHeader& header, const std::s
     curl_easy_setopt(_conn, CURLOPT_POSTFIELDS, data.c_str());
     curl_easy_setopt(_conn, CURLOPT_WRITEDATA, buffer);
 
-    if (!__curl_perform_and_clean(_conn))
-        return false;
-
-    body.assign(buffer);
-    return true;
+    return __curl_perform_and_clean(_conn) && (_conn = curl_easy_init());
 }
 
-
+}
 }

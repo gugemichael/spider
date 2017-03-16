@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace engine {
+namespace spider {
 namespace url {
 
 enum class HttpMethod {

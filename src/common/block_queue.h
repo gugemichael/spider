@@ -9,14 +9,16 @@
 
 #include "common/disallow_coping.h"
 
-namespace engine {
+namespace spider {
 
 template<typename T>
 class LazyPendingQueue {
     DISALLOW_COPYING(LazyPendingQueue);
 
 public:
-    LazyPendingQueue(uint32_t capacity) : _internal(capacity) {}
+    LazyPendingQueue(uint32_t capacity) :
+            _internalCapacity(capacity),
+            _internal(capacity) {}
     ~LazyPendingQueue() = default;
 
     void offer(T element) {
@@ -34,8 +36,11 @@ public:
         return got;
     }
 
+    uint32_t capacity() { return _internalCapacity; }
+
 private:
     // internal queue
+    uint32_t _internalCapacity;
     boost::lockfree::queue<T> _internal;
     // syncer
     std::mutex _lock;

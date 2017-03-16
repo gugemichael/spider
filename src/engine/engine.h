@@ -1,15 +1,31 @@
 //
-// Created by Michael on 15/03/2017.
+// Created by Michael on 16/03/2017.
 //
 
-#ifndef SPIDER_ENGINE_H
-#define SPIDER_ENGINE_H
+#pragma once
 
+#include <memory>
+
+#include "scheduler/scheduler.h"
+
+namespace spider {
 namespace engine {
+
+using namespace spider::scheduler;
 
 class GlobalEngine {
 
+public:
+    void setScheduler(std::shared_ptr<scheduler::Scheduler> schd) {
+        this->_scheduler = std::move(schd);
+    }
+
+    void process(spider::fetcher::DownloadResponse *response);
+
+private:
+    std::shared_ptr<scheduler::Scheduler> _scheduler;
 };
 
+
 }
-#endif //SPIDER_ENGINE_H
+}

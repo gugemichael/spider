@@ -3,7 +3,7 @@
 
 #include "scheduler.h"
 #include "common/basic.h"
-#include "common/url_request.h"
+#include "common/web/url_request.h"
 
 namespace spider {
 namespace scheduler {
