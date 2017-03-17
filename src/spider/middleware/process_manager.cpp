@@ -3,3 +3,12 @@
 //
 
 #include "process_manager.h"
+
+namespace spider {
+namespace processor {
+
+void ProcessManager::installMiddleware() {
+}
+
+}
+}

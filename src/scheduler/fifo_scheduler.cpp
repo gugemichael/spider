@@ -39,6 +39,7 @@ void FIFOScheduler::schedule() {
                     break;
                 case fetcher::DownloadStatus::NETWORK_FAILED:
                 case fetcher::DownloadStatus::REQUEST_INVALID:
+                case fetcher::DownloadStatus::UNKNOWN_ERROR:
                     LOG(WARNING) << "url request download error : " << int(response->status) << ". url ["
                                  << request->uri()
                                  << "]";

@@ -60,7 +60,7 @@ private:
     // downloader will fetch request able object from this queue
 
     // boost::lockfree::queue<url::DownloadRequest*> _requestQueue;
-    LazyPendingQueue<url::DownloadRequest*> _requestQueue;
+    LazyNotifyQueue<url::DownloadRequest*> _requestQueue;
 
 
     // schedule thread

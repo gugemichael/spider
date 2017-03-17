@@ -4,6 +4,8 @@
 // SPIDER_DOWNLOADER_CPP
 //
 
+#include <common/web/web_object.h>
+#include "engine/engine.h"
 #include "common/web/url_request.h"
 
 #include "download.h"
@@ -11,13 +13,21 @@
 namespace spider {
 namespace fetcher {
 
+using namespace spider;
+
 thread_local SimpleCUrl ThreadPoolFetcher::_curl;
 
-void ThreadPoolFetcher::addTask(url::DownloadRequest *task, DownloadCallbackFunc func) {
+void ThreadPoolFetcher::addTask(url::DownloadRequest* task, DownloadCallbackFunc func) {
     auto obeject = stdx::make_unique<Downloadable>(task);
     obeject->setCallback(func);
 
     _taskQueue.offer(obeject.release());
+}
+
+url::WebObject* __parse(const std::string& url, const std::string& content) {
+    auto web = stdx::make_unique<url::WebObject>(url);
+
+    return web.release();
 }
 
 void ThreadPoolFetcher::__worker(int id) {
@@ -27,8 +37,10 @@ void ThreadPoolFetcher::__worker(int id) {
     _curl.setTimeout(30);
     _curl.initialize();
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
     while (true) {
-        Downloadable *task = this->_taskQueue.take();
+        std::unique_ptr<Downloadable> task(this->_taskQueue.take());
 
         auto resp = stdx::make_unique<DownloadResponse>();
         resp->status = DownloadStatus::SUCCESS;
@@ -41,16 +53,20 @@ void ThreadPoolFetcher::__worker(int id) {
             case url::HttpMethod::POST:
                 break;
         }
-        resp->body = std::move(returnBody);
+        resp->bodyContent = std::move(returnBody);
 
         if (task->callback)
             task->callback(task->request, resp.get());
 
-        delete task;
+        auto web = __parse(task->request->uri(), resp->bodyContent);
 
-        LOG(INFO) << "thread pool downloader fetch content size " << resp->body.size();
+        _engine->process(web);
+
+        LOG(INFO) << "thread pool downloader fetch content size " << resp->bodyContent.size();
     }
+#pragma clang diagnostic pop
 }
+
 
 void ThreadPoolFetcher::destory() {
 

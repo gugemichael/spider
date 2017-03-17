@@ -33,10 +33,12 @@ enum class DownloadStatus {
 
 struct DownloadResponse {
     DownloadStatus status;
-    std::string body;
+    std::string bodyContent;
 };
 
-using DownloadCallbackFunc = std::function<void(url::DownloadRequest *, DownloadResponse *)>;
+using DownloadCallbackFunc = std::function<void(url::DownloadRequest*, DownloadResponse*)>;
+
+using namespace spider;
 
 /**
  * Url request downloader
@@ -45,20 +47,20 @@ using DownloadCallbackFunc = std::function<void(url::DownloadRequest *, Download
 class Downloader {
 
 public:
-    virtual void addTask(url::DownloadRequest *task, DownloadCallbackFunc func = nullptr) = 0;
+    virtual void addTask(url::DownloadRequest* task, DownloadCallbackFunc func = nullptr) = 0;
     virtual void destory() = 0;
 
     struct Downloadable {
-        Downloadable(url::DownloadRequest *req) : request(req) {}
+        Downloadable(url::DownloadRequest* req) : request(req) {}
         void setCallback(DownloadCallbackFunc proc) { this->callback = proc; }
 
-        url::DownloadRequest *request;
+        url::DownloadRequest* request;
         DownloadCallbackFunc callback;
     };
 
 protected:
     // global engine
-    std::shared_ptr<spider::engine::GlobalEngine> _engine;
+    engine::GlobalEngine* _engine;      // not owned
 };
 
 
@@ -66,17 +68,17 @@ class ThreadPoolFetcher : public Downloader {
     using ThreadGroup = std::vector<std::thread>;
 
 public:
-    ThreadPoolFetcher(std::shared_ptr<spider::engine::GlobalEngine> engine, uint32_t threads) :
+    ThreadPoolFetcher(engine::GlobalEngine* engine, uint32_t threads) :
             _threads(threads),
             _taskQueue(4096) {
-//        _engine = engine;
+        _engine = engine;
 
         for (uint32_t i = 0; i < this->_threads; ++i) {
             _threadPool.emplace_back(std::bind(&ThreadPoolFetcher::__worker, this, i));
         }
     }
 
-    virtual void addTask(url::DownloadRequest *task, DownloadCallbackFunc func = nullptr) override;
+    virtual void addTask(url::DownloadRequest* task, DownloadCallbackFunc func = nullptr) override;
 
     void destory() override;
 
@@ -86,7 +88,7 @@ private:
     // thread pool and attached blocking queue
     uint32_t _threads;
     ThreadGroup _threadPool;
-    spider::LazyPendingQueue<Downloadable *> _taskQueue;
+    spider::LazyNotifyQueue<Downloadable*> _taskQueue;
 
     // libcurl handle
     static thread_local SimpleCUrl _curl;

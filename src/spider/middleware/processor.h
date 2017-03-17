@@ -7,7 +7,10 @@
 #include "common/disallow_coping.h"
 #include "common/web/web_object.h"
 
+namespace spider {
 namespace middleware {
+
+using namespace spider;
 
 class Processor {
     DISALLOW_COPYING(Processor);
@@ -18,10 +21,9 @@ public:
 
 public :
     virtual bool setup() = 0;
-
-    virtual void handle(std::shared_ptr<WebObject> webObject) = 0;
-
+    virtual void handle(std::shared_ptr<url::WebObject> webObject) = 0;
 };
 
 }   // end of namespace middleware
+}
 

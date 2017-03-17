@@ -12,14 +12,14 @@
 namespace spider {
 
 template<typename T>
-class LazyPendingQueue {
-    DISALLOW_COPYING(LazyPendingQueue);
+class LazyNotifyQueue {
+    DISALLOW_COPYING(LazyNotifyQueue);
 
 public:
-    LazyPendingQueue(uint32_t capacity) :
+    LazyNotifyQueue(uint32_t capacity) :
             _internalCapacity(capacity),
             _internal(capacity) {}
-    ~LazyPendingQueue() = default;
+    ~LazyNotifyQueue() = default;
 
     void offer(T element) {
         _internal.push(element);
