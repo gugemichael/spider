@@ -8,6 +8,7 @@
 
 #include <queue>
 #include <string>
+#include <array>
 #include <thread>
 
 #include <glog/logging.h>
@@ -16,6 +17,7 @@
 #include "common/web/url_request.h"
 #include "common/block_queue.h"
 
+#include "spider/fetcher/web_parser.h"
 #include "spider/fetcher/simple_curl.h"
 
 
@@ -37,6 +39,7 @@ struct DownloadResponse {
 };
 
 using DownloadCallbackFunc = std::function<void(url::DownloadRequest*, DownloadResponse*)>;
+using UniversalParser = std::array<std::shared_ptr<WebParser>, ALL_PARSER_COUNT>;
 
 using namespace spider;
 
@@ -47,6 +50,13 @@ using namespace spider;
 class Downloader {
 
 public:
+    Downloader(engine::GlobalEngine* engine) :
+            _engine(engine),
+            _httpParsers{std::make_shared<HeaderParser>(), std::make_shared<PageContentParser>()} {
+
+    }
+    virtual ~Downloader() = default;
+
     virtual void addTask(url::DownloadRequest* task, DownloadCallbackFunc func = nullptr) = 0;
     virtual void destory() = 0;
 
@@ -61,6 +71,9 @@ public:
 protected:
     // global engine
     engine::GlobalEngine* _engine;      // not owned
+
+    // specific parser
+    UniversalParser _httpParsers;
 };
 
 
@@ -69,9 +82,9 @@ class ThreadPoolFetcher : public Downloader {
 
 public:
     ThreadPoolFetcher(engine::GlobalEngine* engine, uint32_t threads) :
+            Downloader(engine),
             _threads(threads),
             _taskQueue(4096) {
-        _engine = engine;
 
         for (uint32_t i = 0; i < this->_threads; ++i) {
             _threadPool.emplace_back(std::bind(&ThreadPoolFetcher::__worker, this, i));

@@ -7,6 +7,8 @@
 #include <string>
 #include <unordered_map>
 
+#include "common/stdx/memory.h"
+
 namespace spider {
 namespace url {
 

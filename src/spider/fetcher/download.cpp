@@ -21,11 +21,16 @@ void ThreadPoolFetcher::addTask(url::DownloadRequest* task, DownloadCallbackFunc
     auto obeject = stdx::make_unique<Downloadable>(task);
     obeject->setCallback(func);
 
+    // don't reclaim url::DownloadRequest* of task object. even
+    // on exception happen
     _taskQueue.offer(obeject.release());
 }
 
-url::WebObject* __parse(const std::string& url, const std::string& content) {
+url::WebObject* __parse(const UniversalParser& parsers, const std::string& url, const std::string& content) {
     auto web = stdx::make_unique<url::WebObject>(url);
+    for (auto& parser : parsers) {
+        parser->parse(web.get());
+    }
 
     return web.release();
 }
@@ -58,9 +63,11 @@ void ThreadPoolFetcher::__worker(int id) {
         if (task->callback)
             task->callback(task->request, resp.get());
 
-        auto web = __parse(task->request->uri(), resp->bodyContent);
+        auto webObject = __parse(_httpParsers, task->request->uri(), resp->bodyContent);
 
-        _engine->process(web);
+        // engine::process() must be the lasted step. so others could
+        // not take the ownership with webObject
+        _engine->process(webObject);
 
         LOG(INFO) << "thread pool downloader fetch content size " << resp->bodyContent.size();
     }

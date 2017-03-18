@@ -16,6 +16,7 @@ public:
             _uri(uri), _httpMethod(HttpMethod::GET) {
 
     }
+
     ~DownloadRequest() = default;
 
     const std::string& uri() { return _uri; }
