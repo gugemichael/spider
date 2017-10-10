@@ -7,9 +7,5 @@
 namespace spider {
 namespace url {
 
-bool spider::url::WebObject::resovleContent() {
-    return true;
-}
-
 }
 }

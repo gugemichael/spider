@@ -41,8 +41,6 @@ public:
         return _rawContent;
     }
 
-    bool resovleContent();
-
 private:
     std::unique_ptr<WebObject> _source;
 
