@@ -7,11 +7,11 @@
 namespace spider {
 namespace fetcher {
 
-bool PageContentParser::parse(url::WebObject* webObject) {
+bool PageContentParser::parse(url::WebPageObject* webObject) {
     return true;
 }
 
-bool HeaderParser::parse(url::WebObject* webObject) {
+bool HeaderParser::parse(url::WebPageObject* webObject) {
     return true;
 }
 

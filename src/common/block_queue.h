@@ -11,23 +11,23 @@
 
 namespace spider {
 
-template<typename T>
+template<typename ElemType>
 class LazyNotifyQueue {
+public:
     DISALLOW_COPYING(LazyNotifyQueue);
 
-public:
-    LazyNotifyQueue(uint32_t capacity) :
+    explicit LazyNotifyQueue(uint32_t capacity) :
             _internalCapacity(capacity),
             _internal(capacity) {}
     ~LazyNotifyQueue() = default;
 
-    void offer(T element) {
+    void offer(ElemType element) {
         _internal.push(element);
         _notifier.notify_all();
     }
 
-    T take() {
-        T got;
+    ElemType take() {
+        ElemType got;
         while (!_internal.pop(got)) {
             std::unique_lock<std::mutex> locker(_lock);
             _notifier.wait(locker);
@@ -41,7 +41,8 @@ public:
 private:
     // internal queue
     uint32_t _internalCapacity;
-    boost::lockfree::queue<T> _internal;
+    boost::lockfree::queue<ElemType> _internal;
+
     // syncer
     std::mutex _lock;
     std::condition_variable _notifier;

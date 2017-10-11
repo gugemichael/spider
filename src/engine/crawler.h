@@ -11,18 +11,18 @@
 namespace spider {
 namespace engine {
 
-class GlobalCrawler {
-    DISALLOW_COPYING(GlobalCrawler);
+class GlobalSpider {
+    DISALLOW_COPYING(GlobalSpider);
 
 public :
-    explicit GlobalCrawler(scheduler::Scheduler* scheduler);
-    ~GlobalCrawler() {};
+    explicit GlobalSpider(scheduler::Scheduler* scheduler);
+    ~GlobalSpider() {};
 
     bool startup();
 
     // initialized seed urls. we will start crawling web page
     // from these points. And they are important to be specified.
-    void useSeedUrls(std::vector<std::string>& seeds);
+    void setSeedUrls(std::vector<std::string>& seeds);
 
 private :
     std::shared_ptr<scheduler::Scheduler> _scheduler;

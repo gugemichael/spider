@@ -7,11 +7,21 @@
 namespace spider {
 namespace engine {
 
-void GlobalEngine::process(url::WebObject* web) {
-    LOG(INFO) << "spider engine process web object url:" << web->url() << ", httpcode:" << web->httpCode();
+void GlobalEngine::OnRequestComplete(url::WebPageObject *webPage) {
+    LOG(INFO) << "spider engine process web object url:" << webPage->url() << ", httpcode:" << webPage->httpCode();
 
     // forwared to processor manager
-    this->_webQueue.offer(web);
+//    this->_webPagesQueue.offer(webPage);
+//    _processorManager->InstallAndPrepare()
+}
+
+bool GlobalEngine::OnProcessComplete(url::WebPageObject *webPage) {
+
+    return false;
+}
+
+void GlobalEngine::OnRescheduleComplete(url::WebPageObject *webPage) {
+
 }
 
 }

@@ -17,19 +17,20 @@ namespace spider {
 namespace scheduler {
 
 class Scheduler {
+public:
     DISALLOW_COPYING(Scheduler);
 
-public:
-    Scheduler() = default;
+    Scheduler() :
+            _downloader(nullptr) {}
     virtual ~Scheduler() = default;
 
     // insert more urls to fetch
-    virtual void addMoreUrls(std::vector<std::unique_ptr<url::DownloadRequest>>& urls) = 0;
+    virtual void AddMoreUrls(std::vector<std::unique_ptr<url::DownloadRequest>>& urls) = 0;
 
-    virtual void runAndJoin() = 0;
-    virtual void stop() = 0;
+    virtual bool RunAndJoin() = 0;
+    virtual void Stop() = 0;
 
-    virtual void setDownloader(fetcher::Downloader* downloader) {
+    virtual void SetDownloader(fetcher::Downloader *downloader) {
         this->_downloader = downloader;
     }
 
@@ -40,18 +41,18 @@ protected:
 };
 
 class FIFOScheduler : public Scheduler {
-
 public:
     FIFOScheduler() : Scheduler(),
                       _requestQueue(4096),
+                      _requestUrls(0),
                       _stop(false) {};
 
-    ~FIFOScheduler() {};
+    ~FIFOScheduler() override = default;
 
-    virtual void addMoreUrls(std::vector<std::unique_ptr<url::DownloadRequest>>& urls) override;
+    void AddMoreUrls(std::vector<std::unique_ptr<url::DownloadRequest>>& urls) override;
 
-    virtual void runAndJoin() override;
-    virtual void stop() override { _stop.store(true, std::memory_order_release); }
+    bool RunAndJoin() override;
+    void Stop() override { _stop.store(true, std::memory_order_release); }
 
     void schedule();
 
@@ -61,7 +62,6 @@ private:
 
     // boost::lockfree::queue<url::DownloadRequest*> _requestQueue;
     LazyNotifyQueue<url::DownloadRequest*> _requestQueue;
-
 
     // schedule thread
     std::thread _poller;

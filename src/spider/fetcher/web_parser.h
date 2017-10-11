@@ -32,25 +32,25 @@ public:
     WebParser() = default;
     virtual ~WebParser() = default;
 
-    virtual bool parse(url::WebObject* webObject) = 0;
+    virtual bool parse(url::WebPageObject* webObject) = 0;
 };
 
 class PageContentParser final : public WebParser {
 
 public :
     PageContentParser() = default;
-    virtual ~PageContentParser() = default;
 
-    virtual bool parse(url::WebObject* webObject) override;
+    ~PageContentParser() override = default;
+    bool parse(url::WebPageObject* webObject) override;
 };
 
 class HeaderParser final : public WebParser {
 
 public :
     HeaderParser() = default;
-    virtual ~HeaderParser() = default;
 
-    virtual bool parse(url::WebObject* webObject) override;
+    ~HeaderParser() override = default;
+    bool parse(url::WebPageObject* webObject) override;
 };
 
 

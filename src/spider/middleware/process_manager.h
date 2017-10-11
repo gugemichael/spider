@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <vector>
+#include <engine/engine.h>
 
 #include "common/block_queue.h"
 
@@ -15,20 +16,23 @@ namespace spider {
 namespace processor {
 
 class ProcessManager {
+    typedef std::vector<std::shared_ptr<middleware::Processor>> MiddlewareList;
 
 public :
     ProcessManager() :
             _webQueue(4096) {
-
     }
 
-    void installMiddleware();
+    void InstallAndPrepare();
 
 private :
-    // register modules
-    std::vector<std::shared_ptr<middleware::Processor>> _middlewares;
+    // global engine
+    engine::GlobalEngine *_engine;      // not owned
 
-    spider::LazyNotifyQueue<url::WebObject*> _webQueue;
+    // register modules
+    MiddlewareList _middlewares;
+
+    spider::LazyNotifyQueue<url::WebPageObject *> _webQueue;
 };
 
 }

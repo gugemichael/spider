@@ -17,14 +17,20 @@ using HttpHeader = std::unordered_map<std::string, std::string>;
 namespace spider {
 namespace fetcher {
 
-class SimpleCUrl {
-    DISALLOW_COPYING(SimpleCUrl);
-
+class SimpleHttpClient {
 public:
-    SimpleCUrl() :
+    DISALLOW_COPYING(SimpleHttpClient);
+
+    SimpleHttpClient() :
             _maxResponseSize(DEFAULT_MAX_RESPONSE_SIZE),
+            _conn(nullptr),
+            _error(CURLE_OK),
+            _dumpUrlRequest(false),
             _timeout(30) {}
-    ~SimpleCUrl() = default;
+
+    ~SimpleHttpClient() = default;
+
+    CURLcode set_curl_common_opts(const std::string uri, std::string& resp);
 
     bool initialize();
     bool hasError() { return _error != 0; }
@@ -32,10 +38,10 @@ public:
     void setMaxRepsonseSize(uint32_t maxResponseSize) { this->_maxResponseSize = maxResponseSize; }
     void setTimeout(uint32_t timeout) { this->_timeout = timeout; }
 
-    bool doGet(const std::string& uri, std::string& body);
-    bool doGet(const std::string& uri, HttpHeader& header, std::string& body);
-    bool doPost(const std::string& uri, const std::string& data, std::string& body);
-    bool doPost(const std::string& uri, HttpHeader& header, const std::string& data, std::string& body);
+    bool httpGet(const std::string& uri, std::string& body);
+    bool httpGet(const std::string& uri, HttpHeader& header, std::string& body);
+    bool httpPost(const std::string& uri, const std::string& data, std::string& body);
+    bool httpPost(const std::string& uri, HttpHeader& header, const std::string& data, std::string& body);
 
 private:
     static std::once_flag _globalSetup;
@@ -46,6 +52,8 @@ private:
     // max response with curl
     uint32_t _maxResponseSize;
     uint32_t _timeout;
+
+    bool _dumpUrlRequest;
 };
 
 }

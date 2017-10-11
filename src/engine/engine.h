@@ -16,28 +16,40 @@ namespace engine {
 using namespace spider;
 
 class GlobalEngine {
+public:
     DISALLOW_COPYING(GlobalEngine);
 
-public:
-    GlobalEngine() :
-            _webQueue(4096),
-            _processor(stdx::make_unique<processor::ProcessManager>()) {
+    GlobalEngine() : _processorManager(stdx::make_unique<processor::ProcessManager>()) {
 
     }
 
-    void setScheduler(std::shared_ptr<scheduler::Scheduler> schd) {
+    void UseScheduler(std::shared_ptr<scheduler::Scheduler> schd) {
         this->_scheduler = std::move(schd);
     }
 
-    void process(url::WebObject* web);
+    // invoke after Downloader finish
+    void OnRequestComplete(url::WebPageObject *webPage);
+
+    // invoke after ProcessorManager handled
+    //
+    // return true. if the web object needs more processing
+    bool OnProcessComplete(url::WebPageObject *webPage);
+
+    // invoke after Scheduler schedue()
+    void OnRescheduleComplete(url::WebPageObject *webPage);
+
+    bool Startup() {
+        auto run = _scheduler->RunAndJoin();
+        _scheduler->Stop();
+
+        return run;
+    }
 
 private:
     std::shared_ptr<scheduler::Scheduler> _scheduler;
 
-    // web content buffuered queue
-    LazyNotifyQueue<url::WebObject*> _webQueue;
     // global processor
-    std::unique_ptr<processor::ProcessManager> _processor;
+    std::unique_ptr<processor::ProcessManager> _processorManager;
 };
 
 

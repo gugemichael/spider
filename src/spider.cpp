@@ -40,11 +40,11 @@ void readUrlSeeds(std::vector<std::string> &seeds) {
 }
 
 void startCrawler() {
-    std::unique_ptr<engine::GlobalCrawler> crawler =
-            stdx::make_unique<engine::GlobalCrawler>(new scheduler::FIFOScheduler());
+    std::unique_ptr<engine::GlobalSpider> crawler =
+            stdx::make_unique<engine::GlobalSpider>(new scheduler::FIFOScheduler());
     std::vector<std::string> urlSeeds;
     readUrlSeeds(urlSeeds);
-    crawler->useSeedUrls(urlSeeds);
+    crawler->setSeedUrls(urlSeeds);
     crawler->startup();
 
     LOG(INFO) << "crawler worker complete and exit ";

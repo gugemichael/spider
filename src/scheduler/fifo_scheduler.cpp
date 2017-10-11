@@ -8,7 +8,7 @@
 namespace spider {
 namespace scheduler {
 
-void FIFOScheduler::addMoreUrls(std::vector<std::unique_ptr<url::DownloadRequest>>& urls) {
+void FIFOScheduler::AddMoreUrls(std::vector<std::unique_ptr<url::DownloadRequest>>& urls) {
     for (auto& url : urls) {
         this->_requestQueue.offer(url.release());
     }
@@ -16,12 +16,14 @@ void FIFOScheduler::addMoreUrls(std::vector<std::unique_ptr<url::DownloadRequest
     this->_requestUrls += urls.size();
 }
 
-void FIFOScheduler::runAndJoin() {
+bool FIFOScheduler::RunAndJoin() {
     invariant(_downloader != nullptr);
 
     _poller = std::thread(std::bind(&FIFOScheduler::schedule, this));
     if (_poller.joinable())
         _poller.join();
+
+    return true;
 }
 
 void FIFOScheduler::schedule() {
@@ -31,7 +33,7 @@ void FIFOScheduler::schedule() {
         job = this->_requestQueue.take();
         LOG(INFO) << "schedule transfer download task. url -> " << job->uri();
 
-        this->_downloader->addTask(job, [](url::DownloadRequest* requestJob, fetcher::DownloadResponse* response) {
+        this->_downloader->AddTask(job, [](url::DownloadRequest *requestJob, fetcher::DownloadResponse *response) {
             std::unique_ptr<url::DownloadRequest> release(requestJob);
             switch (response->status) {
                 case fetcher::DownloadStatus::SUCCESS:

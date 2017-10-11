@@ -1,22 +1,25 @@
 //
-// Created by Michael on 10/17/16.
+// Created by Michael on 11/10/2017.
 //
 
-#pragma once
+#ifndef SPIDER_STORAGE_H
+#define SPIDER_STORAGE_H
+
+#include "spider/middleware/processor.h"
 
 namespace spider {
 
-namespace storage {
-
 class Storage {
+public:
+    Storage() = default;
+    virtual ~Storage() = default;
 
-public :
-    Storage(Storage &storage) = delete;
-    Storage(Storage &&storage) = delete;
+    virtual bool init() = 0;
 
-    virtual bool create() = 0;
+
 };
 
 }
 
-}
+
+#endif //SPIDER_STORAGE_H

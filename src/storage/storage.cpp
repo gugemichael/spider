@@ -1,18 +1,12 @@
 //
-// Created by Michael on 10/17/16.
+// Created by Michael on 11/10/2017.
 //
 
 #include "storage.h"
 
 namespace spider {
-namespace storage {
-
-bool Storage::create() {
-
-    return true;
-}
+namespace middleware {
 
 
 }
-
 }

@@ -19,31 +19,35 @@ enum HttpStatusCode {
     STATUS_INTERNAL_ERROR = 500,
 };
 
-class WebObject final {
+class WebPageObject final {
     using WebURL = std::string;
     using WebContent = std::string;
     using WebHeader = std::unordered_map<std::string, std::string>;
 
 public:
-    WebObject(WebURL url) : _url(url) {}
-    ~WebObject() = default;
+    WebPageObject(WebURL url) :
+            _url(url),
+            _httpCode(0) {}
+
+    ~WebPageObject() = default;
 
     uint32_t httpCode() const {
         return _httpCode;
     }
+
     const WebHeader& headerMap() const {
         return _headerMap;
     }
+
     const WebURL& url() const {
         return _url;
     }
+
     const WebContent& rawContent() const {
         return _rawContent;
     }
 
 private:
-    std::unique_ptr<WebObject> _source;
-
     // crawler response's http status code
     uint32_t _httpCode;
 

@@ -13,15 +13,15 @@ namespace middleware {
 using namespace spider;
 
 class Processor {
-    DISALLOW_COPYING(Processor);
-
 public:
+    DISALLOW_COPYING(Processor);
     Processor() = default;
     virtual ~Processor() = default;
 
 public :
     virtual bool setup() = 0;
-    virtual void handle(std::shared_ptr<url::WebObject> webObject) = 0;
+
+    virtual void handle(std::shared_ptr<url::WebPageObject> webPage) = 0;
 };
 
 }   // end of namespace middleware

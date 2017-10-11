@@ -7,7 +7,8 @@
 namespace spider {
 namespace processor {
 
-void ProcessManager::installMiddleware() {
+void ProcessManager::InstallAndPrepare() {
+
 }
 
 }

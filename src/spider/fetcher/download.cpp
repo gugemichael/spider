@@ -15,19 +15,19 @@ namespace fetcher {
 
 using namespace spider;
 
-thread_local SimpleCUrl ThreadPoolFetcher::_curl;
+thread_local SimpleHttpClient ThreadPoolFetcher::httpClient;
 
-void ThreadPoolFetcher::addTask(url::DownloadRequest* task, DownloadCallbackFunc func) {
-    auto obeject = stdx::make_unique<Downloadable>(task);
-    obeject->setCallback(func);
+void ThreadPoolFetcher::AddTask(url::DownloadRequest *task, DownloadCallbackFunc func) {
+    auto object = stdx::make_unique<Downloadable>(task);
+    object->setCallback(func);
 
     // don't reclaim url::DownloadRequest* of task object. even
     // on exception happen
-    _taskQueue.offer(obeject.release());
+    _taskQueue.offer(object.release());
 }
 
-url::WebObject* __parse(const UniversalParser& parsers, const std::string& url, const std::string& content) {
-    auto web = stdx::make_unique<url::WebObject>(url);
+url::WebPageObject *parse(const UniversalParser& parsers, const std::string& url, const std::string& content) {
+    auto web = stdx::make_unique<url::WebPageObject>(url);
     for (auto& parser : parsers) {
         parser->parse(web.get());
     }
@@ -35,16 +35,17 @@ url::WebObject* __parse(const UniversalParser& parsers, const std::string& url, 
     return web.release();
 }
 
-void ThreadPoolFetcher::__worker(int id) {
+void ThreadPoolFetcher::worker(int id) {
     LOG(INFO) << "thread pool download worker " << id << " startup with lazy_queue length : " << _taskQueue.capacity();
     std::string returnBody;
 
-    _curl.setTimeout(30);
-    _curl.initialize();
+    httpClient.setTimeout(30);
+    httpClient.initialize();
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
     while (true) {
+        returnBody.clear();
         std::unique_ptr<Downloadable> task(this->_taskQueue.take());
 
         auto resp = stdx::make_unique<DownloadResponse>();
@@ -52,7 +53,7 @@ void ThreadPoolFetcher::__worker(int id) {
 
         switch (task->request->httpMethod()) {
             case url::HttpMethod::GET:
-                if (!_curl.doGet(task->request->uri(), returnBody))
+                if (!httpClient.httpGet(task->request->uri(), returnBody))
                     resp->status = DownloadStatus::UNKNOWN_ERROR;
                 break;
             case url::HttpMethod::POST:
@@ -63,11 +64,11 @@ void ThreadPoolFetcher::__worker(int id) {
         if (task->callback)
             task->callback(task->request, resp.get());
 
-        auto webObject = __parse(_httpParsers, task->request->uri(), resp->bodyContent);
+        auto webPage = parse(_httpParsers, task->request->uri(), resp->bodyContent);
 
         // engine::process() must be the lasted step. so others could
         // not take the ownership with webObject
-        _engine->process(webObject);
+        _engine->OnRequestComplete(webPage);
 
         LOG(INFO) << "thread pool downloader fetch content size " << resp->bodyContent.size();
     }
@@ -75,7 +76,7 @@ void ThreadPoolFetcher::__worker(int id) {
 }
 
 
-void ThreadPoolFetcher::destory() {
+void ThreadPoolFetcher::Destory() {
 
 }
 
