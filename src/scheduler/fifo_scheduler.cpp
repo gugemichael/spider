@@ -1,17 +1,15 @@
-#include <glog/logging.h>
-
+#include "utils/log.h"
+#include "utils/util.h"
+#include "common/web/url_request.h"
 
 #include "scheduler.h"
-#include "common/basic.h"
-#include "common/web/url_request.h"
 
 namespace spider {
 namespace scheduler {
 
 void FIFOScheduler::AddMoreUrls(std::vector<std::unique_ptr<url::DownloadRequest>>& urls) {
-    for (auto& url : urls) {
+    for (auto& url : urls)
         this->_requestQueue.offer(url.release());
-    }
 
     this->_requestUrls += urls.size();
 }
@@ -27,30 +25,29 @@ bool FIFOScheduler::RunAndJoin() {
 }
 
 void FIFOScheduler::schedule() {
-    url::DownloadRequest* job;
+    url::DownloadRequest *job;
 
     while (!_stop.load(std::memory_order_acquire)) {
         job = this->_requestQueue.take();
-        LOG(INFO) << "schedule transfer download task. url -> " << job->uri();
+        LogDebug("schedule transfer download task. url -> %s", job->uri().c_str());
 
         this->_downloader->AddTask(job, [](url::DownloadRequest *requestJob, fetcher::DownloadResponse *response) {
-            std::unique_ptr<url::DownloadRequest> release(requestJob);
             switch (response->status) {
                 case fetcher::DownloadStatus::SUCCESS:
-                    LOG(INFO) << "url request download success. url [" << release->uri() << "]";
                     break;
                 case fetcher::DownloadStatus::NETWORK_FAILED:
                 case fetcher::DownloadStatus::REQUEST_INVALID:
+                case fetcher::DownloadStatus::REQUEST_FAIL:
+                    LogWarning("url request download error : %d, url[%s]", int(response->status),
+                               requestJob->uri().c_str());
+                    break;
                 case fetcher::DownloadStatus::UNKNOWN_ERROR:
-                    LOG(WARNING) << "url request download error : " << int(response->status) << ". url ["
-                                 << release->uri()
-                                 << "]";
                     break;
             }
         });
     }
 
-    LOG(INFO) << "scheduler request queue empty and exit ...";
+    LogInfo("scheduler request queue empty and exit ...");
 }
 
 }

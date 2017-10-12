@@ -12,8 +12,6 @@
 #include <thread>
 #include <utility>
 
-#include <glog/logging.h>
-
 #include "common/stdx/memory.h"
 #include "common/web/url_request.h"
 #include "common/block_queue.h"
@@ -31,7 +29,7 @@ class GlobalEngine;
 namespace fetcher {
 
 enum class DownloadStatus {
-    SUCCESS, NETWORK_FAILED, REQUEST_INVALID, UNKNOWN_ERROR
+    SUCCESS, NETWORK_FAILED, REQUEST_INVALID, REQUEST_FAIL, UNKNOWN_ERROR
 };
 
 struct DownloadResponse {
@@ -40,7 +38,6 @@ struct DownloadResponse {
 };
 
 using DownloadCallbackFunc = std::function<void(url::DownloadRequest *, DownloadResponse *)>;
-using UniversalParser = std::array<std::shared_ptr<WebParser>, ALL_PARSER_COUNT>;
 
 using namespace spider;
 
@@ -53,9 +50,8 @@ class Downloader {
 public:
     explicit Downloader(engine::GlobalEngine *engine) :
             _engine(engine),
-            _httpParsers{std::make_shared<HeaderParser>(), std::make_shared<PageContentParser>()} {
+            _httpUrlsExtractor(std::make_shared<WebParserImpl>()) {}
 
-    }
 
     virtual ~Downloader() = default;
 
@@ -76,8 +72,8 @@ protected:
     // global engine
     engine::GlobalEngine *_engine;      // not owned
 
-    // specific parser
-    UniversalParser _httpParsers;
+    // html parser
+    std::shared_ptr<WebParser> _httpUrlsExtractor;
 };
 
 

@@ -1,51 +1,70 @@
 #include <iostream>
 #include <vector>
+#include <sys/stat.h>
+#include <fstream>
 
-#include <glog/logging.h>
-#include <engine/crawler.h>
+#include "utils/log.h"
 
-#include "common/disallow_coping.h"
-#include "common/web/url_request.h"
-#include "common/stdx/memory.h"
-#include "scheduler/scheduler.h"
-#include "spider/middleware/processor.h"
+#include "engine/crawler.h"
 
 using namespace spider;
 
-const std::string LOGS_DIR = "./logs/";
+const std::string SPIDER = "/tmp/spider";
+const std::string SPIDER_LOGS_DIR = SPIDER + "/logs/";
+const std::string SPIDER_URLS = SPIDER + "/urls";
 
-void readUrlSeeds(std::vector<std::string> &);
-void startCrawler();
+std::vector<std::string> readUrlSeeds() {
+    char buffer[8192];
+    std::vector<std::string> urls;
+    if (access(SPIDER_URLS.c_str(), 0) == 0) {
+        std::ifstream reader;
+        reader.open(SPIDER_URLS, std::ios::in);
+        while (reader) {
+            memset(buffer, 0, sizeof(buffer));
+            reader.getline(buffer, sizeof(buffer));
+            std::string url(buffer);
+            if (!url.empty() && url.at(0) != '#')
+                urls.push_back(url);
+
+//            if (strnlen(buffer, sizeof(buffer)))
+//                urls.emplace_back(buffer);
+        }
+    }
+
+    LogInfo("successful load url seeds count %d", urls.size());
+    return std::move(urls);
+}
 
 int main(int argc, char **argv) {
-    // initialize glog
-    FLAGS_log_dir = LOGS_DIR;
-    const char *appName = static_cast<const char *>(argv[0]);
-    google::InitGoogleLogging(appName);
+    // create spider global folder
+    if (access(SPIDER.c_str(), 2) != 0) {
+        if (mkdir(SPIDER.c_str(), S_IRWXU | S_IRGRP | S_IWGRP | S_IRWXO) != 0) {
+            fprintf(stderr, "make spider global directory %s failed.", SPIDER.c_str());
+            exit(-1);
+        }
+    }
 
-    startCrawler();
+//    auto logger = nimo_log_split_init(SPIDER_LOGS_DIR.c_str(), SPLIT_ONE_DAY, 0);
+    auto logger = nimo_log_split_init(nullptr, SPLIT_ONE_DAY, 0);
+    nimo_log_buffer(logger, 8192);
+    nimo_log_level(logger, INFO);
 
-    LOG(INFO) << "spider shutdown !!! ";
-    google::ShutdownGoogleLogging();
+    // initialize global spider and scheduler engine
+    engine::GlobalSpider *crawler = new engine::GlobalSpider(new scheduler::FIFOScheduler());
+    if (!(crawler->logger = logger)) {
+        fprintf(stderr, "initialize global logger failed");
+        exit(-1);
+    }
+
+    std::vector<std::string> seeds = readUrlSeeds();
+    crawler->setSeedUrls(seeds);
+    crawler->startup();
+
+    LogInfo("crawler worker complete and exit ");
+
+    delete crawler;
+    nimo_log_destroy();
+
     return 0;
 }
 
-void readUrlSeeds(std::vector<std::string> &seeds) {
-    seeds.push_back("http://www.qq.com");
-    seeds.push_back("http://www.baidu.com");
-    seeds.push_back("http://www.csdn.net");
-    seeds.push_back("http://www.163.com");
-    seeds.push_back("http://www.sina.com.cn");
-    seeds.push_back("http://www.cplusplus.com");
-}
-
-void startCrawler() {
-    std::unique_ptr<engine::GlobalSpider> crawler =
-            stdx::make_unique<engine::GlobalSpider>(new scheduler::FIFOScheduler());
-    std::vector<std::string> urlSeeds;
-    readUrlSeeds(urlSeeds);
-    crawler->setSeedUrls(urlSeeds);
-    crawler->startup();
-
-    LOG(INFO) << "crawler worker complete and exit ";
-}

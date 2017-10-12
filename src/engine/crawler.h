@@ -24,12 +24,16 @@ public :
     // from these points. And they are important to be specified.
     void setSeedUrls(std::vector<std::string>& seeds);
 
+    // logger
+    log_t *logger;
+
 private :
     std::shared_ptr<scheduler::Scheduler> _scheduler;
     std::shared_ptr<fetcher::Downloader> _downloader;
 
     // unique global spider engine
     std::unique_ptr<GlobalEngine> _engine;
+
 
     // entire url seed list
     std::vector<std::string> _seeds;

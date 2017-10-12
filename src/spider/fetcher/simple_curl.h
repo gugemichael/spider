@@ -30,18 +30,20 @@ public:
 
     ~SimpleHttpClient() = default;
 
-    CURLcode set_curl_common_opts(const std::string uri, std::string& resp);
+    CURLcode set_curl_common_opts(std::string uri, std::string& resp);
 
-    bool initialize();
-    bool hasError() { return _error != 0; }
+    bool Initail();
+    bool IsError() { return _error != 0; }
 
-    void setMaxRepsonseSize(uint32_t maxResponseSize) { this->_maxResponseSize = maxResponseSize; }
-    void setTimeout(uint32_t timeout) { this->_timeout = timeout; }
+    const char *GetLastError() { return curl_easy_strerror(_error); }
 
-    bool httpGet(const std::string& uri, std::string& body);
-    bool httpGet(const std::string& uri, HttpHeader& header, std::string& body);
-    bool httpPost(const std::string& uri, const std::string& data, std::string& body);
-    bool httpPost(const std::string& uri, HttpHeader& header, const std::string& data, std::string& body);
+    void SetMaxRepsonseSize(uint32_t maxResponseSize) { this->_maxResponseSize = maxResponseSize; }
+    void SetTimeout(uint32_t timeout) { this->_timeout = timeout; }
+
+    bool RequestGet(const std::string& uri, std::string& body);
+    bool RequestGet(const std::string& uri, HttpHeader& header, std::string& body);
+    bool RequestPost(const std::string& uri, const std::string& data, std::string& body);
+    bool RequestPost(const std::string& uri, HttpHeader& header, const std::string& data, std::string& body);
 
 private:
     static std::once_flag _globalSetup;

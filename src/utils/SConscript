@@ -1,0 +1,4 @@
+env = Environment(CC = 'gcc', CFLAGS = ('-g -Wno-deprecated'))
+log = env.StaticLibrary('liblog',Glob("log.c"))  
+
+Return("log")

@@ -54,9 +54,9 @@ public:
     bool RunAndJoin() override;
     void Stop() override { _stop.store(true, std::memory_order_release); }
 
+private:
     void schedule();
 
-private:
     // multi thread safe queue keep the request from out side. the
     // downloader will fetch request able object from this queue
 

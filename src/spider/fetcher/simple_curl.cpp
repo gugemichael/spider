@@ -3,9 +3,10 @@
 //
 
 #include <functional>
-#include <glog/logging.h>
+#include <string>
 
-#include "common/basic.h"
+#include "utils/log.h"
+#include "utils/util.h"
 
 #include "simple_curl.h"
 
@@ -16,13 +17,13 @@ namespace fetcher {
 
 std::once_flag SimpleHttpClient::_globalSetup;
 
-bool SimpleHttpClient::initialize() {
+bool SimpleHttpClient::Initail() {
     std::call_once(SimpleHttpClient::_globalSetup, [] {
         CURLcode code;
         if ((code = curl_global_init(CURL_GLOBAL_DEFAULT)) == CURLE_OK)
-            LOG(INFO) << "curl global initialize successful";
+            LogInfo("curl global initialize successful");
         else
-            LOG(ERROR) << "curl global initialize failed : " << code;
+            LogError("curl global initialize failed : %d", code);
     });
 
     return (this->_conn = curl_easy_init()) != nullptr;
@@ -30,41 +31,46 @@ bool SimpleHttpClient::initialize() {
 
 size_t request_handler(void *buffer, size_t size, size_t nmemb, void *user_p) {
     auto *destination = (std::string *) user_p;
-    destination->assign((const char *) buffer, size * nmemb);
+    auto len = size * nmemb;
+    destination->reserve(destination->size() + len + 4096);
+    destination->append((const char *) buffer, size * nmemb);
     return size * nmemb;
 }
 
-bool __curl_perform_and_clean(CURL *conn) {
-    CURLcode error = curl_easy_perform(conn);
+CURLcode __curl_perform_and_clean(CURL *conn) {
+    CURLcode code = curl_easy_perform(conn);
     curl_easy_cleanup(conn);
 
-    if (error != CURLE_OK)
-        LOG(WARNING) << "curl request perform failed : " << curl_easy_strerror(error);
+    if (code != CURLE_OK)
+        LogInfo("curl request perform failed : %s", curl_easy_strerror(code));
 
-    return CURLE_OK;
+    return code;
 }
 
-bool SimpleHttpClient::httpGet(const std::string& uri, std::string& body) {
-    return this->httpGet(uri, emptyHeader, body);
+bool SimpleHttpClient::RequestGet(const std::string& uri, std::string& body) {
+    return this->RequestGet(uri, emptyHeader, body);
 }
 
 
-bool SimpleHttpClient::httpGet(const std::string& uri, HttpHeader& header, std::string& body) {
+bool SimpleHttpClient::RequestGet(const std::string& uri, HttpHeader& header, std::string& body) {
     invariant(_conn != nullptr);
 
-    if (set_curl_common_opts(uri, body) != CURLE_OK) {
+    CURLcode code = set_curl_common_opts(uri, body);
+    if (code != CURLE_OK) {
+        _error = code;
         curl_easy_cleanup(_conn);
         return false;
     }
 
-    return __curl_perform_and_clean(_conn) && (_conn = curl_easy_init());
+    return (_error = __curl_perform_and_clean(_conn)) == CURLE_OK && (_conn = curl_easy_init());
 }
 
-bool SimpleHttpClient::httpPost(const std::string& uri, const std::string& data, std::string& body) {
-    return this->httpPost(uri, emptyHeader, data, body);
+bool SimpleHttpClient::RequestPost(const std::string& uri, const std::string& data, std::string& body) {
+    return this->RequestPost(uri, emptyHeader, data, body);
 }
 
-bool SimpleHttpClient::httpPost(const std::string& uri, HttpHeader& header, const std::string& data, std::string& body) {
+bool SimpleHttpClient::RequestPost(const std::string& uri, HttpHeader& header, const std::string& data,
+                                   std::string& body) {
     invariant(_conn != nullptr);
 
     char buffer[_maxResponseSize];
@@ -75,25 +81,25 @@ bool SimpleHttpClient::httpPost(const std::string& uri, HttpHeader& header, cons
     curl_easy_setopt(_conn, CURLOPT_POSTFIELDS, data.c_str());
     curl_easy_setopt(_conn, CURLOPT_WRITEDATA, buffer);
 
-    return __curl_perform_and_clean(_conn) && (_conn = curl_easy_init());
+    return (_error = __curl_perform_and_clean(_conn)) && (_conn = curl_easy_init());
 }
 
 CURLcode SimpleHttpClient::set_curl_common_opts(const std::string uri, std::string& resp) {
     CURLcode error;
 
     if ((error = curl_easy_setopt(_conn, CURLOPT_URL, uri.c_str())) != 0) {
-        LOG(ERROR) << "simple_curl CURLOPT_URL return error : " << error;
+        LogError("simple_curl CURLOPT_URL return error : %d", error);
         return error;
     }
 
     if ((error = curl_easy_setopt(_conn, CURLOPT_FOLLOWLOCATION, 1)) != 0) {
         curl_easy_setopt(_conn, CURLOPT_MAXREDIRS, 8);
-        LOG(ERROR) << "simple_curl CURLOPT_FOLLOWLOCATION return error : " << error;
+        LogError("simple_curl CURLOPT_FOLLOWLOCATION return error : %d", error);
         return error;
     }
 
     if ((error = curl_easy_setopt(_conn, CURLOPT_TIMEOUT, _timeout)) != 0) {
-        LOG(ERROR) << "simple_curl CURLOPT_TIMEOUT return error : " << error;
+        LogError("simple_curl CURLOPT_TIMEOUT return error : %d", error);
         return error;
     }
 

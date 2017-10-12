@@ -1,17 +1,21 @@
-env = Environment(CC = 'g++', CPPFLAGS = ('-std=c++11 -g -Wno-deprecated'))
-#env = Environment(tools = ['gcc','gnulink'],CC='clang', CPPFLAGS = ('-std=c++14 -g'))
+env = Environment(CC = 'gcc', CPPFLAGS = ('-std=c++11 -g -Wno-deprecated'))
 
 INCLUDE_PATH = ['']
-LIBPATH = ['/usr/lib', '/usr/local/lib'],
 
-env.Append(CCFLAGS = '-g')
+# dependency libraries
+env.Append(LIBPATH=['/usr/local/lib', 'src/utils'])
+env.Append(LIBS=['curl','boost_regex-mt','log'])
+
+# c log moudle
+log = SConscript(['src/utils/SConscript']) 
 
 spider = env.Program('./bin/spider', [
 		'src/spider.cpp',
+		log,
 		Glob('src/engine//*.cpp'),
 		Glob('src/scheduler/*.cpp'),
 		Glob('src/common/*.cpp'),
-		Glob('src/spider/fetcher/*.cpp'),
-], CPPPATH = ['src'] + INCLUDE_PATH, LIBS=['glog','curl'])
+		Glob('src/spider/fetcher/*.cpp')
+], CPPPATH = ['src'] + INCLUDE_PATH)
 
 

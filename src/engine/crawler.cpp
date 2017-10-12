@@ -2,6 +2,9 @@
 // Created by Michael on 15/03/2017.
 //
 
+#include "utils/log.h"
+#include "utils/util.h"
+
 #include "crawler.h"
 
 namespace spider {
@@ -10,9 +13,9 @@ namespace engine {
 GlobalSpider::GlobalSpider(scheduler::Scheduler *scheduler) :
         _scheduler(scheduler),
         _engine(stdx::make_unique<GlobalEngine>()) {
-    LOG_ASSERT(_scheduler != nullptr);
+    invariant(_scheduler != nullptr);
 
-    LOG(INFO) << "Gloal crawler initailize successful";
+    LogInfo("Gloal crawler initailize successful");
 }
 
 bool GlobalSpider::startup() {

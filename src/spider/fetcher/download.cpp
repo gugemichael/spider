@@ -4,11 +4,11 @@
 // SPIDER_DOWNLOADER_CPP
 //
 
-#include <common/web/web_object.h>
-#include "engine/engine.h"
-#include "common/web/url_request.h"
+#include <iostream>
+#include "utils/log.h"
+#include "utils/util.h"
 
-#include "download.h"
+#include "engine/engine.h"
 
 namespace spider {
 namespace fetcher {
@@ -26,26 +26,24 @@ void ThreadPoolFetcher::AddTask(url::DownloadRequest *task, DownloadCallbackFunc
     _taskQueue.offer(object.release());
 }
 
-url::WebPageObject *parse(const UniversalParser& parsers, const std::string& url, const std::string& content) {
+url::WebPageObject *parse(WebParser *parser, const std::string& url, const std::string& content) {
     auto web = stdx::make_unique<url::WebPageObject>(url);
-    for (auto& parser : parsers) {
-        parser->parse(web.get());
-    }
+    parser->parse(content, web.get());
 
     return web.release();
 }
 
 void ThreadPoolFetcher::worker(int id) {
-    LOG(INFO) << "thread pool download worker " << id << " startup with lazy_queue length : " << _taskQueue.capacity();
-    std::string returnBody;
+    LogInfo("thread pool download worker %d startup with lazy_queue length : %u", id, _taskQueue.capacity());
+    std::string return_body;
 
-    httpClient.setTimeout(30);
-    httpClient.initialize();
+    httpClient.SetTimeout(30);
+    httpClient.Initail();
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
     while (true) {
-        returnBody.clear();
+        return_body.clear();
         std::unique_ptr<Downloadable> task(this->_taskQueue.take());
 
         auto resp = stdx::make_unique<DownloadResponse>();
@@ -53,24 +51,27 @@ void ThreadPoolFetcher::worker(int id) {
 
         switch (task->request->httpMethod()) {
             case url::HttpMethod::GET:
-                if (!httpClient.httpGet(task->request->uri(), returnBody))
-                    resp->status = DownloadStatus::UNKNOWN_ERROR;
+                if (!httpClient.RequestGet(task->request->uri(), return_body)) {
+                    LogWarning("http request failed %s", httpClient.GetLastError());
+                    resp->status = DownloadStatus::REQUEST_FAIL;
+                }
                 break;
             case url::HttpMethod::POST:
                 break;
         }
-        resp->bodyContent = std::move(returnBody);
+        resp->bodyContent = std::move(return_body);
 
         if (task->callback)
             task->callback(task->request, resp.get());
 
-        auto webPage = parse(_httpParsers, task->request->uri(), resp->bodyContent);
+        auto web_page = parse(_httpUrlsExtractor.get(), task->request->uri(), resp->bodyContent);
 
         // engine::process() must be the lasted step. so others could
         // not take the ownership with webObject
-        _engine->OnRequestComplete(webPage);
+        _engine->OnRequestComplete(web_page);
 
-        LOG(INFO) << "thread pool downloader fetch content size " << resp->bodyContent.size();
+        LogInfo("thread pool downloader fetch web url %s, content size %s", task->request->uri().c_str(),
+                utils::human_readable_capacity(resp->bodyContent.size()).c_str());
     }
 #pragma clang diagnostic pop
 }
