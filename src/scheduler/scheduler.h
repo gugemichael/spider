@@ -25,7 +25,7 @@ public:
     virtual ~Scheduler() = default;
 
     // insert more urls to fetch
-    virtual void AddMoreUrls(std::vector<std::unique_ptr<url::DownloadRequest>>& urls) = 0;
+    virtual void AddMoreUrls(std::vector<std::unique_ptr<http::DownloadRequest>>& urls) = 0;
 
     virtual bool RunAndJoin() = 0;
     virtual void Stop() = 0;
@@ -49,7 +49,7 @@ public:
 
     ~FIFOScheduler() override = default;
 
-    void AddMoreUrls(std::vector<std::unique_ptr<url::DownloadRequest>>& urls) override;
+    void AddMoreUrls(std::vector<std::unique_ptr<http::DownloadRequest>>& urls) override;
 
     bool RunAndJoin() override;
     void Stop() override { _stop.store(true, std::memory_order_release); }
@@ -60,8 +60,8 @@ private:
     // multi thread safe queue keep the request from out side. the
     // downloader will fetch request able object from this queue
 
-    // boost::lockfree::queue<url::DownloadRequest*> _requestQueue;
-    LazyNotifyQueue<url::DownloadRequest*> _requestQueue;
+    // boost::lockfree::queue<http::DownloadRequest*> _requestQueue;
+    LazyNotifyQueue<http::DownloadRequest*> _requestQueue;
 
     // schedule thread
     std::thread _poller;

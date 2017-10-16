@@ -1,13 +1,13 @@
 #include "utils/log.h"
 #include "utils/util.h"
-#include "common/web/url_request.h"
 
-#include "scheduler.h"
+#include "common/web/url_request.h"
+#include "scheduler/scheduler.h"
 
 namespace spider {
 namespace scheduler {
 
-void FIFOScheduler::AddMoreUrls(std::vector<std::unique_ptr<url::DownloadRequest>>& urls) {
+void FIFOScheduler::AddMoreUrls(std::vector<std::unique_ptr<http::DownloadRequest>>& urls) {
     for (auto& url : urls)
         this->_requestQueue.offer(url.release());
 
@@ -25,20 +25,20 @@ bool FIFOScheduler::RunAndJoin() {
 }
 
 void FIFOScheduler::schedule() {
-    url::DownloadRequest *job;
+    http::DownloadRequest *job;
 
     while (!_stop.load(std::memory_order_acquire)) {
         job = this->_requestQueue.take();
-        LogDebug("schedule transfer download task. url -> %s", job->uri().c_str());
+        LogDebug("schedule transfer download task. http -> %s", job->uri().c_str());
 
-        this->_downloader->AddTask(job, [](url::DownloadRequest *requestJob, fetcher::DownloadResponse *response) {
+        this->_downloader->AddTask(job, [](http::DownloadRequest *requestJob, fetcher::DownloadResponse *response) {
             switch (response->status) {
                 case fetcher::DownloadStatus::SUCCESS:
                     break;
                 case fetcher::DownloadStatus::NETWORK_FAILED:
                 case fetcher::DownloadStatus::REQUEST_INVALID:
                 case fetcher::DownloadStatus::REQUEST_FAIL:
-                    LogWarning("url request download error : %d, url[%s]", int(response->status),
+                    LogWarning("http request download error : %d, http[%s]", int(response->status),
                                requestJob->uri().c_str());
                     break;
                 case fetcher::DownloadStatus::UNKNOWN_ERROR:

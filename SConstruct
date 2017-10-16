@@ -15,7 +15,8 @@ spider = env.Program('./bin/spider', [
 		Glob('src/engine//*.cpp'),
 		Glob('src/scheduler/*.cpp'),
 		Glob('src/common/*.cpp'),
-		Glob('src/spider/fetcher/*.cpp')
+		Glob('src/spider/fetcher/*.cpp'),
+		Glob('src/spider/middleware/*.cpp')
 ], CPPPATH = ['src'] + INCLUDE_PATH)
 
 

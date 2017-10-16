@@ -5,7 +5,7 @@
 #include "utils/log.h"
 #include "utils/util.h"
 
-#include "crawler.h"
+#include "engine/crawler.h"
 
 namespace spider {
 namespace engine {
@@ -20,9 +20,9 @@ GlobalSpider::GlobalSpider(scheduler::Scheduler *scheduler) :
 
 bool GlobalSpider::startup() {
     // initialize seed urls that the point site we would start to crawl
-    std::vector<std::unique_ptr<url::DownloadRequest>> seeds;
+    std::vector<std::unique_ptr<http::DownloadRequest>> seeds;
     for (auto& url : this->_seeds) {
-        seeds.push_back(stdx::make_unique<url::DownloadRequest>(url));
+        seeds.push_back(stdx::make_unique<http::DownloadRequest>(url));
     }
 
     _downloader = std::make_shared<fetcher::ThreadPoolFetcher>(_engine.get(), std::thread::hardware_concurrency() * 2);

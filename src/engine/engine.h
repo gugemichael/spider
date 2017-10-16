@@ -19,8 +19,10 @@ class GlobalEngine {
 public:
     DISALLOW_COPYING(GlobalEngine);
 
-    GlobalEngine() : _processorManager(stdx::make_unique<processor::ProcessManager>()) {
+    GlobalEngine() :
+        _processor(stdx::make_unique<processor::ProcessManager>()) {
 
+        _processor->InstallAndPrepare();
     }
 
     void UseScheduler(std::shared_ptr<scheduler::Scheduler> schd) {
@@ -28,15 +30,15 @@ public:
     }
 
     // invoke after Downloader finish
-    void OnRequestComplete(url::WebPageObject *webPage);
+    void OnRequestComplete(http::WebSourceObject *web_source);
 
     // invoke after ProcessorManager handled
     //
     // return true. if the web object needs more processing
-    bool OnProcessComplete(url::WebPageObject *webPage);
+    bool OnProcessComplete(http::WebSourceObject *webPage);
 
     // invoke after Scheduler schedue()
-    void OnRescheduleComplete(url::WebPageObject *webPage);
+    void OnRescheduleComplete(http::WebSourceObject *webPage);
 
     bool Startup() {
         auto run = _scheduler->RunAndJoin();
@@ -49,7 +51,7 @@ private:
     std::shared_ptr<scheduler::Scheduler> _scheduler;
 
     // global processor
-    std::unique_ptr<processor::ProcessManager> _processorManager;
+    std::unique_ptr<processor::ProcessManager> _processor;
 };
 
 

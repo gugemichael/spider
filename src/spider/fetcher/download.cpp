@@ -5,6 +5,7 @@
 //
 
 #include <iostream>
+
 #include "utils/log.h"
 #include "utils/util.h"
 
@@ -17,17 +18,17 @@ using namespace spider;
 
 thread_local SimpleHttpClient ThreadPoolFetcher::httpClient;
 
-void ThreadPoolFetcher::AddTask(url::DownloadRequest *task, DownloadCallbackFunc func) {
+void ThreadPoolFetcher::AddTask(http::DownloadRequest *task, DownloadCallbackFunc func) {
     auto object = stdx::make_unique<Downloadable>(task);
     object->setCallback(func);
 
-    // don't reclaim url::DownloadRequest* of task object. even
+    // don't reclaim http::DownloadRequest* of task object. even
     // on exception happen
     _taskQueue.offer(object.release());
 }
 
-url::WebPageObject *parse(WebParser *parser, const std::string& url, const std::string& content) {
-    auto web = stdx::make_unique<url::WebPageObject>(url);
+http::WebSourceObject *parse(WebParser *parser, const std::string& url, const std::string& content) {
+    auto web = stdx::make_unique<http::WebSourceObject>(url, content);
     parser->parse(content, web.get());
 
     return web.release();
@@ -50,13 +51,13 @@ void ThreadPoolFetcher::worker(int id) {
         resp->status = DownloadStatus::SUCCESS;
 
         switch (task->request->httpMethod()) {
-            case url::HttpMethod::GET:
+            case http::HttpMethod::GET:
                 if (!httpClient.RequestGet(task->request->uri(), return_body)) {
                     LogWarning("http request failed %s", httpClient.GetLastError());
                     resp->status = DownloadStatus::REQUEST_FAIL;
                 }
                 break;
-            case url::HttpMethod::POST:
+            case http::HttpMethod::POST:
                 break;
         }
         resp->bodyContent = std::move(return_body);
@@ -64,13 +65,13 @@ void ThreadPoolFetcher::worker(int id) {
         if (task->callback)
             task->callback(task->request, resp.get());
 
-        auto web_page = parse(_httpUrlsExtractor.get(), task->request->uri(), resp->bodyContent);
+        auto web_page_object = parse(_httpUrlsExtractor.get(), task->request->uri(), resp->bodyContent);
 
         // engine::process() must be the lasted step. so others could
         // not take the ownership with webObject
-        _engine->OnRequestComplete(web_page);
+        _engine->OnRequestComplete(web_page_object);
 
-        LogInfo("thread pool downloader fetch web url %s, content size %s", task->request->uri().c_str(),
+        LogInfo("thread pool downloader fetch web http %s, content size %s", task->request->uri().c_str(),
                 utils::human_readable_capacity(resp->bodyContent.size()).c_str());
     }
 #pragma clang diagnostic pop

@@ -21,7 +21,7 @@ public:
 public :
     virtual bool setup() = 0;
 
-    virtual void handle(std::shared_ptr<url::WebPageObject> webPage) = 0;
+    virtual void handle(http::WebSourceObject* web_source) = 0;
 };
 
 }   // end of namespace middleware

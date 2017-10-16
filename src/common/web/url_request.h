@@ -4,7 +4,7 @@
 #include <utility>
 
 namespace spider {
-namespace url {
+namespace http {
 
 enum class HttpMethod {
     GET, POST

@@ -10,51 +10,62 @@
 #include "common/stdx/memory.h"
 
 namespace spider {
-namespace url {
+namespace http {
 
-enum HttpStatusCode {
-    STATUS_OK = 200,
-    STATUS_REDIRECTION = 300,
-    STATUS_BAD_REQUEST = 400,
-    STATUS_INTERNAL_ERROR = 500,
+enum HttpResponseCode {
+    HTTP_OK = 200,
+    HTTP_REDIRECTION = 300,
+    HTTP_BAD_REQUEST = 400,
+    HTTP_INTERNAL_ERROR = 500,
 };
 
-class WebPageObject final {
+class WebSourceObject final {
+public:
     using WebURL = std::string;
     using WebContent = std::string;
-    using WebHeader = std::unordered_map<std::string, std::string>;
+    using Outlink = std::unordered_map<std::string /*Url*/, uint32_t /*weight*/>;
 
 public:
-    WebPageObject(WebURL url) :
-            _url(url),
-            _httpCode(0) {}
+    explicit WebSourceObject(const WebURL& url, const WebContent& content) :
+    _url(url),
+    _raw_content(content),
+    _http_code(0) {}
 
-    ~WebPageObject() = default;
+    ~WebSourceObject() = default;
 
-    uint32_t httpCode() const {
-        return _httpCode;
+    uint32_t GetHttpCode() const {
+        return _http_code;
     }
 
-    const WebHeader& headerMap() const {
-        return _headerMap;
+    void SetHttpCode(uint32_t http_code) {
+        _http_code = http_code;
     }
 
     const WebURL& url() const {
         return _url;
     }
 
-    const WebContent& rawContent() const {
-        return _rawContent;
+    const WebContent& content() const {
+        return _raw_content;
+    }
+
+    const Outlink& outlink() const {
+        return _outlink;
+    }
+
+    void SetOutlink(Outlink& outlink) {
+        _outlink = std::move(outlink);
     }
 
 private:
-    // crawler response's http status code
-    uint32_t _httpCode;
-
-    WebHeader _headerMap;
-
     WebURL _url;
-    WebContent _rawContent;
+    WebContent _raw_content;
+
+    // crawler response's http status code
+    uint32_t _http_code;
+
+    // outlinks : url's link weight
+    Outlink _outlink;
 };
 
 }

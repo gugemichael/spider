@@ -31,7 +31,7 @@ std::vector<std::string> readUrlSeeds() {
         }
     }
 
-    LogInfo("successful load url seeds count %d", urls.size());
+    LogInfo("successful load http seeds count %d", urls.size());
     return std::move(urls);
 }
 

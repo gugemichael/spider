@@ -3,25 +3,24 @@
 //
 #include "utils/log.h"
 
-#include "engine.h"
+#include "engine/engine.h"
 
 namespace spider {
 namespace engine {
 
-void GlobalEngine::OnRequestComplete(url::WebPageObject *webPage) {
-    LogDebug("spider engine process web object %s, http_code %d", webPage->url().c_str(), webPage->httpCode());
+void GlobalEngine::OnRequestComplete(http::WebSourceObject *web_source) {
+    LogDebug("spider engine process web object %s, http_code %d", web_source->url().c_str(), web_source->GetHttpCode());
 
     // forwared to processor manager
-//    this->_webPagesQueue.offer(webPage);
-//    _processorManager->InstallAndPrepare()
+    _processor->Add(web_source);
 }
 
-bool GlobalEngine::OnProcessComplete(url::WebPageObject *webPage) {
+bool GlobalEngine::OnProcessComplete(http::WebSourceObject *webPage) {
 
     return false;
 }
 
-void GlobalEngine::OnRescheduleComplete(url::WebPageObject *webPage) {
+void GlobalEngine::OnRescheduleComplete(http::WebSourceObject *webPage) {
 
 }
 

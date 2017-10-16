@@ -26,7 +26,7 @@ public:
 
     virtual ~WebParser() = default;
 
-    virtual bool parse(const std::string& web_content, url::WebPageObject *web_object) = 0;
+    virtual bool parse(const std::string& web_content, http::WebSourceObject *web_object) = 0;
 };
 
 class WebParserImpl final : public WebParser {
@@ -35,7 +35,7 @@ public :
 
     ~WebParserImpl() override = default;
 
-    bool parse(const std::string& web_content, url::WebPageObject *web_object) override;
+    bool parse(const std::string& web_content, http::WebSourceObject *web_source) override;
 };
 
 

@@ -4,14 +4,16 @@
 
 #pragma once
 
-#include "engine.h"
+#include "engine/engine.h"
 #include "scheduler/scheduler.h"
 #include "spider/fetcher/download.h"
+#include "spider/middleware/process_manager.h"
 
 namespace spider {
 namespace engine {
 
 class GlobalSpider {
+public :
     DISALLOW_COPYING(GlobalSpider);
 
 public :
@@ -34,8 +36,7 @@ private :
     // unique global spider engine
     std::unique_ptr<GlobalEngine> _engine;
 
-
-    // entire url seed list
+    // entire http seed list
     std::vector<std::string> _seeds;
 };
 

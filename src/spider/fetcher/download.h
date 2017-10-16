@@ -37,7 +37,7 @@ struct DownloadResponse {
     std::string bodyContent;
 };
 
-using DownloadCallbackFunc = std::function<void(url::DownloadRequest *, DownloadResponse *)>;
+using DownloadCallbackFunc = std::function<void(http::DownloadRequest *, DownloadResponse *)>;
 
 using namespace spider;
 
@@ -55,16 +55,16 @@ public:
 
     virtual ~Downloader() = default;
 
-    virtual void AddTask(url::DownloadRequest *task, DownloadCallbackFunc func = nullptr) = 0;
+    virtual void AddTask(http::DownloadRequest *task, DownloadCallbackFunc func = nullptr) = 0;
 
     virtual void Destory() = 0;
 
     struct Downloadable {
-        explicit Downloadable(url::DownloadRequest *req) : request(req) {}
+        explicit Downloadable(http::DownloadRequest *req) : request(req) {}
 
         void setCallback(DownloadCallbackFunc proc) { this->callback = std::move(proc); }
 
-        url::DownloadRequest *request;
+        http::DownloadRequest *request;
         DownloadCallbackFunc callback;
     };
 
@@ -91,7 +91,7 @@ public:
         }
     }
 
-    void AddTask(url::DownloadRequest *task, DownloadCallbackFunc func = nullptr) override;
+    void AddTask(http::DownloadRequest *task, DownloadCallbackFunc func = nullptr) override;
 
     void Destory() override;
 

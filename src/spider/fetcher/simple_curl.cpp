@@ -8,7 +8,7 @@
 #include "utils/log.h"
 #include "utils/util.h"
 
-#include "simple_curl.h"
+#include "spider/fetcher/simple_curl.h"
 
 HttpHeader emptyHeader;
 
